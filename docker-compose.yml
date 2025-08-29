@@ -1,0 +1,7 @@
+name: contex
+
+include:
+  # - contex-frontend/docker-compose.yml
+  # - contex-backend/docker-compose.yml
+  # - contex-cache/docker-compose.yml
+  - contex-db/docker-compose.yml
