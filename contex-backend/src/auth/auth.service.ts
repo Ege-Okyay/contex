@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
+import { UpdateDto } from './dto/update.dto';
 
 @Injectable()
 export class AuthService {
@@ -37,5 +38,21 @@ export class AuthService {
     return {
       access_token: this.jwtService.sign(payload)
     };
+  }
+
+  async update(dto: UpdateDto, id: string) {
+    const data: { username?: string, password?: string } = {};
+
+    if (dto.newUsername) data.username = dto.newUsername;
+    if (dto.newPassword) data.password = await bcrypt.hash(dto.newPassword, await bcrypt.genSalt());
+
+    if (Object.keys(data).length === 0) {
+      return this.prisma.user.findUnique({ where: { id } });
+    }
+
+    return await this.prisma.user.update({
+      where: { id },
+      data
+    });
   }
 }
