@@ -1,7 +1,6 @@
-import { RegisterForm } from "~/components/auth/register-form";
-import type { Route } from "../+types/root";
-import { LoginForm } from "~/components/auth/login-form";
+import type { Route } from "../../+types/root";
 import { ContexLogo } from "~/components/contex-logo";
+import { Outlet } from "react-router";
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -10,7 +9,7 @@ export function meta({ }: Route.MetaArgs) {
 }
 
 export default function Auth() {
-  const status = false;
+  const status = true;
 
   return (
     <div className="bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
@@ -24,16 +23,17 @@ export default function Auth() {
               <ContexLogo width={10} height={10} />
               <span className="sr-only">Contex</span>
             </a>
-            <h1 className="text-xl font-bold">Welcome back to Contex</h1>
+            <h1 className="text-xl font-bold">
+              {(status) ? (
+                "Welcome back to Contex"
+              ) : (
+                "Contex setup"
+              )}
+            </h1>
           </div>
         </div>
         <div className="flex flex-col gap-6">
-          {
-            (status) ?
-              <LoginForm />
-              :
-              <RegisterForm />
-          }
+          <Outlet />
         </div>
         <div className="mt-6 text-muted-foreground *:[a]:hover:text-primary text-center text-xs text-balance *:[a]:underline *:[a]:underline-offset-4">
           Contex is an fully open-source AI blog generator and CMS tool
