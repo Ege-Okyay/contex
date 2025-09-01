@@ -6,7 +6,7 @@ export class SetupController {
   constructor(private prisma: PrismaService) { }
 
   @Get('status')
-  async setupStatus() {
-    return { status: await this.prisma.user.count() > 0 };
+  async getStatus() {
+    return { completed: await this.prisma.user.count() > 0 };
   }
 }

@@ -1,11 +1,18 @@
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
-import { Form, useActionData, useNavigation } from "react-router";
-import type { Route } from "../../+types/root";
+import { Form, redirect, useFetcher } from "react-router";
 import { api } from "~/api/http";
 import { Loader2Icon } from "lucide-react";
 import { loginSchema } from "~/schemas/auth";
+import type { Route } from "./+types/login";
+
+export async function loader() {
+  const status = await api<{ completed: boolean }>("/setup/status");
+  if (!status.completed) return redirect("/auth/register");
+
+  return null;
+}
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
@@ -27,7 +34,7 @@ export async function action({ request }: Route.ActionArgs) {
       body: { username, password }
     });
 
-    console.log("Access Token: ", data.access_token);
+    console.log(data);
 
     return { success: true, access_token: data.access_token };
   } catch (error) {
@@ -40,12 +47,12 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function LoginForm() {
-  const navigation = useNavigation();
-  const actionData = useActionData<typeof action>();
-  const isSubmitting = navigation.state === "submitting";
+  const fetcher = useFetcher<typeof action>();
+  const { data: fetcherData, state } = fetcher;
+  const isSubmitting = state === "submitting";
 
   return (
-    <Form method="post" className="grid gap-3">
+    <fetcher.Form method="post" className="grid gap-3">
       <Label htmlFor="username">Username</Label>
       <Input
         id="username"
@@ -53,9 +60,9 @@ export default function LoginForm() {
         placeholder="john_doe"
         required
       />
-      {actionData?.fieldErrors?.username && (
+      {fetcherData?.fieldErrors?.username && (
         <p className="text-sm text-red-500">
-          {actionData.fieldErrors.username}
+          {fetcherData.fieldErrors.username}
         </p>
       )}
 
@@ -67,23 +74,20 @@ export default function LoginForm() {
         placeholder="**********"
         required
       />
-      {actionData?.fieldErrors?.password && (
+      {fetcherData?.fieldErrors?.password && (
         <p className="text-sm text-red-500">
-          {actionData.fieldErrors.password}
+          {fetcherData.fieldErrors.password}
         </p>
       )}
 
-      {actionData?.formError && (
-        <p className="text-sm text-red-500">{actionData.formError}</p>
+      {fetcherData?.formError && (
+        <p className="text-sm text-red-500">{fetcherData.formError}</p>
       )}
       
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? (
-          <Loader2Icon className="animate-spin" />
-        ) : (
-          "Login"
-        )}
+        {isSubmitting && <Loader2Icon className="animate-spin mr-1" />}
+        Login
       </Button>
-    </Form>
+    </fetcher.Form>
   );
 }

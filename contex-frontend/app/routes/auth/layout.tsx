@@ -1,6 +1,7 @@
 import type { Route } from "../../+types/root";
 import { ContexLogo } from "~/components/contex-logo";
-import { Outlet } from "react-router";
+import { Outlet, redirect, useLoaderData } from "react-router";
+import { api } from "~/api/http";
 
 export function meta({ }: Route.MetaArgs) {
   return [
@@ -8,8 +9,13 @@ export function meta({ }: Route.MetaArgs) {
   ]
 }
 
+export async function loader() {
+  const status = await api<{ completed: boolean }>("/setup/status");
+  return { completed: status.completed };
+}
+
 export default function Auth() {
-  const status = true;
+  const { completed } = useLoaderData<typeof loader>();
 
   return (
     <div className="bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
@@ -24,7 +30,7 @@ export default function Auth() {
               <span className="sr-only">Contex</span>
             </a>
             <h1 className="text-xl font-bold">
-              {(status) ? (
+              {(completed) ? (
                 "Welcome back to Contex"
               ) : (
                 "Contex setup"
