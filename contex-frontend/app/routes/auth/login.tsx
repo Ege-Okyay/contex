@@ -1,15 +1,27 @@
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
-import { Form, redirect, useFetcher } from "react-router";
+import { redirect, useFetcher, useNavigate } from "react-router";
 import { api } from "~/api/http";
 import { Loader2Icon } from "lucide-react";
-import { loginSchema } from "~/schemas/auth";
+import { loginResponseSchema, loginSchema } from "~/schemas/auth";
 import type { Route } from "./+types/login";
+import { useEffect } from "react";
+import { toast } from "sonner";
+import { z } from "zod";
+import { FieldError } from "~/components/form/field-error";
 
+// These loaders send too many request
 export async function loader() {
-  const status = await api<{ completed: boolean }>("/setup/status");
-  if (!status.completed) return redirect("/auth/register");
+  const res = await api("/setup/status", {
+    schema: z.object({ completed: z.boolean() })
+  });
+  if (!res.success) {
+    console.error("Failed to load setup status:", res.error);
+    return null;
+  }
+
+  if (!res.data.completed) return redirect("/auth/register");
 
   return null;
 }
@@ -22,34 +34,44 @@ export async function action({ request }: Route.ActionArgs) {
   if (!result.success) {
     return {
       success: false,
-      fieldErrors: result.error.flatten().fieldErrors,
+      fieldErrors: result.error.flatten().fieldErrors
     };
   }
 
   const { username, password } = result.data;
 
-  try {
-    const data = await api<{ access_token: string }>("/auth/login", {
-      method: "POST",
-      body: { username, password }
-    });
+  const res = await api("/auth/login", {
+    method: "POST",
+    body: { username, password },
+    schema: loginResponseSchema
+  });
 
-    console.log(data);
-
-    return { success: true, access_token: data.access_token };
-  } catch (error) {
-    console.error("Login failed:", error);
+  if (!res.success) {
     return {
       success: false,
-      formError: (error as Error).message
+      formError: res.error.message,
+      statusCode: res.error.statusCode
     };
   }
+
+  return { success: true, token: res.data.token };
 }
 
 export default function LoginForm() {
   const fetcher = useFetcher<typeof action>();
   const { data: fetcherData, state } = fetcher;
   const isSubmitting = state === "submitting";
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (fetcherData?.success) {
+      toast.success("Logged in successfully", {
+        description: "Redirecting to dashboard...",
+      });
+  
+      navigate("/", { replace: true });
+    }
+  }, [fetcherData?.success, navigate, toast]);
 
   return (
     <fetcher.Form method="post" className="grid gap-3">
@@ -60,11 +82,7 @@ export default function LoginForm() {
         placeholder="john_doe"
         required
       />
-      {fetcherData?.fieldErrors?.username && (
-        <p className="text-sm text-red-500">
-          {fetcherData.fieldErrors.username}
-        </p>
-      )}
+      <FieldError error={fetcherData?.fieldErrors?.username} />
 
       <Label htmlFor="password">Password</Label>
       <Input
@@ -74,11 +92,7 @@ export default function LoginForm() {
         placeholder="**********"
         required
       />
-      {fetcherData?.fieldErrors?.password && (
-        <p className="text-sm text-red-500">
-          {fetcherData.fieldErrors.password}
-        </p>
-      )}
+      <FieldError error={fetcherData?.fieldErrors?.password} />
 
       {fetcherData?.formError && (
         <p className="text-sm text-red-500">{fetcherData.formError}</p>

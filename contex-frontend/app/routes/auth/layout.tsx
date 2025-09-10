@@ -9,14 +9,7 @@ export function meta({ }: Route.MetaArgs) {
   ]
 }
 
-export async function loader() {
-  const status = await api<{ completed: boolean }>("/setup/status");
-  return { completed: status.completed };
-}
-
 export default function Auth() {
-  const { completed } = useLoaderData<typeof loader>();
-
   return (
     <div className="bg-background flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="w-full max-w-sm">
@@ -30,11 +23,7 @@ export default function Auth() {
               <span className="sr-only">Contex</span>
             </a>
             <h1 className="text-xl font-bold">
-              {(completed) ? (
-                "Welcome back to Contex"
-              ) : (
-                "Contex setup"
-              )}
+              Contex - AI Content Generator
             </h1>
           </div>
         </div>
