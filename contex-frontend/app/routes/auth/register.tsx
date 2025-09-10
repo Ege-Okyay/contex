@@ -1,4 +1,4 @@
-import {  useFetcher, useRevalidator } from "react-router";
+import { useFetcher, useNavigate } from "react-router";
 import { api } from "~/api/http";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -40,21 +40,32 @@ export async function action({ request }: Route.ActionArgs) {
   return { success: true };
 }
 
+/*
+  PROBLEM:
+    after registering it sends 4 requests in total
+    
+    - LOG [Response] POST /auth/register 201 - 94 ms
+    - LOG [Response] GET /setup/status 200 - 6 ms
+    - LOG [Response] GET /setup/status 200 - 6 ms
+    - LOG [Response] GET /setup/status 200 - 6 ms
+    
+    last two should not happen 
+*/
 export default function RegisterForm() {
   const fetcher = useFetcher<typeof action>();
   const { data: fetcherData, state } = fetcher;
   const isSubmitting = state === "submitting";
-  const revalidator = useRevalidator();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (fetcherData?.success) {
       toast.success("Setup completed successfully", {
         description: "Redirecting to login...",
       });
-      
-      revalidator.revalidate();
+  
+      navigate("/auth/login", { replace: true });
     }
-  }, [fetcherData?.success, revalidator]);
+  }, [fetcherData?.success, navigate]);
 
   return (
     <fetcher.Form method="post" className="grid gap-3">

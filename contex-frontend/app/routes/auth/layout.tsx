@@ -9,6 +9,12 @@ export function meta({ }: Route.MetaArgs) {
   ]
 }
 
+/*
+  TODO: maybe a better way to handle auth
+  PROBLEM:
+    entering /auth redirects to -> /auth/login : /auth/register
+    but it sends 2 requests to the backend /setup/status
+*/
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const path = url.pathname;
