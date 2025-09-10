@@ -1,12 +1,33 @@
 import type { Route } from "../../+types/root";
 import { ContexLogo } from "~/components/contex-logo";
-import { Outlet, redirect, useLoaderData } from "react-router";
+import { Outlet, redirect } from "react-router";
 import { api } from "~/api/http";
 
 export function meta({ }: Route.MetaArgs) {
   return [
     { title: "Contex | Authentication" }
   ]
+}
+
+export async function loader({ request }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const path = url.pathname;
+
+  const res = await api<{ completed: boolean }>("/setup/status");
+
+  if (!res.success) {
+    console.error("Failed to load setup status:", res.error);
+    throw new Response("Failed to load setup status", { status: 500 });
+  }
+
+  const completed = res.data.completed;
+
+  if (!completed && path.endsWith("/login")) return redirect("/auth/register");
+  if (completed && path.endsWith("/register")) return redirect("/auth/login");
+
+  if (path === "/auth") return redirect(completed ? "/auth/login" : "/auth/register");
+
+  return null;
 }
 
 export default function Auth() {

@@ -9,7 +9,7 @@ export type ApiResult<T> =
   | { success: false; error: ApiError };
 
 type ApiOptions = {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: Record<string, any>;
   headers?: Record<string, string>;
 };

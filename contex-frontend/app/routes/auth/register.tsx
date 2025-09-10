@@ -1,30 +1,14 @@
-import { redirect, useFetcher, useNavigate } from "react-router";
+import {  useFetcher, useRevalidator } from "react-router";
 import { api } from "~/api/http";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import type { Route } from "./+types/register";
-import { registerResponseSchema, registerSchema } from "~/schemas/auth";
+import { registerSchema } from "~/schemas/auth";
 import { useEffect } from "react";
 import { Loader2Icon } from "lucide-react";
 import { toast } from "sonner";
-import { z } from "zod";
 import { FieldError } from "~/components/form/field-error";
-
-// Setup endpoint gets called 3 times after successfull register
-export async function loader() {
-  const res = await api("/setup/status", {
-    schema: z.object({ completed: z.boolean() })
-  });
-  if (!res.success) {
-    console.error("Failed to load setup status:", res.error);
-    return null;
-  }
-
-  if (res.data.completed) return redirect("/auth/login");
-
-  return null;
-}
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
@@ -43,7 +27,6 @@ export async function action({ request }: Route.ActionArgs) {
   const res = await api("/auth/register", {
     method: "POST",
     body: { username, password },
-    schema: registerResponseSchema
   });
 
   if (!res.success) {
@@ -61,17 +44,17 @@ export default function RegisterForm() {
   const fetcher = useFetcher<typeof action>();
   const { data: fetcherData, state } = fetcher;
   const isSubmitting = state === "submitting";
-  const navigate = useNavigate();
+  const revalidator = useRevalidator();
 
   useEffect(() => {
     if (fetcherData?.success) {
       toast.success("Setup completed successfully", {
         description: "Redirecting to login...",
       });
-  
-      navigate("/auth/login", { replace: true });
+      
+      revalidator.revalidate();
     }
-  }, [fetcherData?.success, navigate, toast]);
+  }, [fetcherData?.success, revalidator]);
 
   return (
     <fetcher.Form method="post" className="grid gap-3">

@@ -1,30 +1,14 @@
 import { Label } from "~/components/ui/label";
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
-import { redirect, useFetcher, useNavigate } from "react-router";
+import { useFetcher, useNavigate } from "react-router";
 import { api } from "~/api/http";
 import { Loader2Icon } from "lucide-react";
-import { loginResponseSchema, loginSchema } from "~/schemas/auth";
+import { loginSchema } from "~/schemas/auth";
 import type { Route } from "./+types/login";
 import { useEffect } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
 import { FieldError } from "~/components/form/field-error";
-
-// These loaders send too many request
-export async function loader() {
-  const res = await api("/setup/status", {
-    schema: z.object({ completed: z.boolean() })
-  });
-  if (!res.success) {
-    console.error("Failed to load setup status:", res.error);
-    return null;
-  }
-
-  if (!res.data.completed) return redirect("/auth/register");
-
-  return null;
-}
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
@@ -40,10 +24,9 @@ export async function action({ request }: Route.ActionArgs) {
 
   const { username, password } = result.data;
 
-  const res = await api("/auth/login", {
+  const res = await api<{ access_token: string}>("/auth/login", {
     method: "POST",
     body: { username, password },
-    schema: loginResponseSchema
   });
 
   if (!res.success) {
@@ -54,7 +37,9 @@ export async function action({ request }: Route.ActionArgs) {
     };
   }
 
-  return { success: true, token: res.data.token };
+  console.log(res.data);
+
+  return { success: true, token: res.data.access_token };
 }
 
 export default function LoginForm() {
