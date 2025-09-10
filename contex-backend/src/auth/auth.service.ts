@@ -30,8 +30,8 @@ export class AuthService {
       where: { username: dto.username }
     });
 
-    if (!user) return new UnauthorizedException('Username does not exist');
-    if (!await bcrypt.compare(dto.password, user.password)) return new UnauthorizedException('Wrong password');
+    if (!user) throw new UnauthorizedException('Wrong username');
+    if (!await bcrypt.compare(dto.password, user.password)) throw new UnauthorizedException('Wrong password');
 
     const payload = { username: user.username, sub: user.id };
     
