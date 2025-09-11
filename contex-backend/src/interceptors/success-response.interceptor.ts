@@ -8,6 +8,13 @@ export class SuccessResponseInterceptor<T> implements NestInterceptor<T, { succe
     next: CallHandler
   ): Observable<{ success: true; data: T }> {
     return next.handle().pipe(
+      /*
+        Returning successful requests in a fixed format
+        {
+          success: true,
+          data: {} // ommited if null
+        }
+      */
       map((data) => ({
         success: true,
         data,
